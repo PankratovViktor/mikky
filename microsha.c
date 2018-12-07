@@ -1,8 +1,11 @@
 #include <string.h>
+#include <fnmatch.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -62,6 +65,15 @@ void timeend(struct rusage mytime, struct timeval time1 , struct timeval time2)
 	stime = mytime.ru_stime;
 	cout << "\n user	"<<( (double) (utime.tv_sec - time1.tv_sec) + (double)(utime.tv_usec - time1.tv_usec)/1000000) << "\n sys	" << ((double)(stime.tv_sec - time2.tv_sec) +(double) (stime.tv_usec - time2.tv_usec)/1000000) << "\n";
 }
+string setprob(string b)
+{
+	while (b[b.size()] == ' ')
+	{
+		b.erase(b.size() -1);
+	}
+	return b;
+}
+
 vector <struct part> convsplit(string word)
 {
 	vector <struct part> letswork;
@@ -83,7 +95,7 @@ vector <struct part> convsplit(string word)
 	string myst;
 	for (int i = 0 ; i < word.length();i++)
 	{
-		if ((word[i] != '<') && (word[i] != '>') && (word[i] != '|'))
+		if ((word[i] != '<') && (word[i] != '>') && (word[i] != '|') )
 		{
 			if ((letswork[j].from != "") || (word[i] != ' '))
 			{
@@ -168,7 +180,8 @@ vector <struct part> convsplit(string word)
 		cout << "too many directions\n";
 		return notworking;
 	}
-	cout << letswork[j].to << " " << letswork[j].from;
+	letswork[0].from = setprob(letswork[0].from);
+	letswork[letswork.size()-1].to = setprob(letswork[letswork.size() -1].to);
 	return letswork;
 }
 string read(string b)
@@ -192,6 +205,30 @@ int getdirect()
 	{
 		cout << ">";
 	}
+}
+vector <vector <string>> updatelist(vector<vector<string>> direktlist,string argument,string where,int i)
+{
+	DIR *d = opendir(where.c_str());
+	struct dirent *entry;
+	string c;
+	for (dirent *entry = readdir(d) ; entry !=NULL ;entry = readdir(d))
+	{
+		string b = entry->d_name;
+		if ((b == ".") ||(b == "..")||b[0]!='.')continue;
+		c = where + "/" + entry->d_name;
+		struct stat isitway;
+		stat(c.c_str(), &isitway);
+		if (S_ISDIR(isitway.st_mode)) 
+		{
+			direktlist = updatelist(direktlist,argument,c,i);
+		}
+		if ((fnmatch(argument.c_str() ,where.c_str() , FNM_PATHNAME) == 0) )
+		{
+			direktlist[i].push_back(c);
+		}
+	}
+	closedir(d);
+	return direktlist;
 }
 void execution()
 {
@@ -230,7 +267,7 @@ void execution()
 			{
 				string c;
 				c = "/home";
-				changeit = chdir(c.c_str());
+				changeit = chdir(getenv("HOME"));
 			} 
 			if (a.size() > 2)
 			{
@@ -250,12 +287,15 @@ void execution()
 			struct timezone zone1;
 			gettimeofday(&realtime,&zone1);
 			utime = mytime.ru_utime;
-			cout << "\n" << "seichas vremya" << utime.tv_usec;
 			struct timeval stime;
 			stime = mytime.ru_stime;
 			pid_t pid = fork();
 			if (pid == 0)
 			{
+				cout << a.size();
+				std::string cwd = getcwd(NULL,0);
+				string currentdir;
+				currentdir = cwd;
 				vector <char*> arguments;
 				if (letswork[0].from != "")
 				{
@@ -274,11 +314,35 @@ void execution()
 				}
 				for(int i = 0 ; i < a.size() ; i++)
 				{
+
 					mine.push_back(a[i]);
-					arguments.push_back(&mine[i][0]);
+				}
+				vector <vector <string>> directlist;
+				vector <string> empty;
+				const char * cbp;
+				const char * cmp;
+				string no;
+				for (int i = 0 ; i < mine.size() ; i++)
+				{
+					cout << mine[i];
+
+					if (((cmp = strchr(mine[i].c_str(),'*')) != NULL) || ((cbp = strchr(mine[i].c_str(),'*')) != NULL))						
+					{
+						no = cwd + mine[i] + "/";
+						cout << no;
+						directlist.push_back(empty);
+						directlist = updatelist(directlist, no ,currentdir,i );
+						arguments.push_back(&directlist[i][0][0]);
+					}
+					else
+					{
+						directlist.push_back(empty);
+						directlist[i].push_back(mine[i]);
+						arguments.push_back(&directlist[i][0][0]);
+					}
 				}
 				arguments.push_back(NULL);
-		     		execvp(mine[0].c_str(),&arguments[0]);
+		     		execvp(directlist[0][0].c_str(),&arguments[0]);
 				exit(0);
 			}
 			else
