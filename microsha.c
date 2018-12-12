@@ -47,6 +47,11 @@ vector <string> split (vector <string> a,string word)
 		}
 	}
 	a.push_back(word);
+	int ii;
+	for ( ii = 0 ; ii < a.size() ; ii++)
+	{
+//		cout << a[ii];
+	}
 	return a;	
 }
 struct rusage timebegin()
@@ -206,28 +211,63 @@ int getdirect()
 		cout << ">";
 	}
 }
-vector <vector <string>> updatelist(vector<vector<string>> direktlist,string argument,string where,int i)
+int execute (vector < vector < string > > direktlist, vector <string > mine,vector <char * > arguments)
 {
+	int i;
+	int j;
+	for ( i =0 ; i < mine.size() ; i++)
+	{
+		if ((mine[i].find('*') != std::string::npos) || (mine[i].find('?') != std::string::npos))
+		{
+			for(j = 0 ; j < direktlist[i].size() ; j++)
+			{
+				mine[i] = direktlist[i][j];
+				execute(direktlist ,mine,arguments);
+			}
+		}
+	}
+	vector <char *> argiments;
+	for (i = 0; i < mine.size() ; i++)
+	{
+		argiments.push_back(&mine[i][0]);
+	}
+	execvp(mine[0].c_str(),&argiments[0]);
+	return 0;
+}
+int checkdir ( string argument, string where)
+{
+	int a = 0; // fnmatch(argument.c_str() , where.c_str() , FNM_PATHNAME);
+	return a;
+}
+vector <vector <string> > updatelist(vector<vector<string> > direktlist,string argument,string where,int i)
+{
+//	cout << "hello";
 	DIR *d = opendir(where.c_str());
 	struct dirent *entry;
 	string c;
 	for (dirent *entry = readdir(d) ; entry !=NULL ;entry = readdir(d))
 	{
+//		cout << "hello";
 		string b = entry->d_name;
-		if ((b == ".") ||(b == "..")||b[0]!='.')continue;
+		if ((b == ".") ||(b == ".."))continue;
 		c = where + "/" + entry->d_name;
+//		cout << c << "\n";
 		struct stat isitway;
 		stat(c.c_str(), &isitway);
 		if (S_ISDIR(isitway.st_mode)) 
 		{
 			direktlist = updatelist(direktlist,argument,c,i);
 		}
-		if ((fnmatch(argument.c_str() ,where.c_str() , FNM_PATHNAME) == 0) )
+
+		else if (checkdir(argument , c) == 0) 
 		{
+//			cout << c << "\n";
 			direktlist[i].push_back(c);
+			cout << direktlist[i][direktlist[i].size() -1] << "\n";
 		}
 	}
 	closedir(d);
+//	cout << direktlist[direktlist.size() - 1][0] << "\n";
 	return direktlist;
 }
 void execution()
@@ -292,7 +332,6 @@ void execution()
 			pid_t pid = fork();
 			if (pid == 0)
 			{
-				cout << a.size();
 				std::string cwd = getcwd(NULL,0);
 				string currentdir;
 				currentdir = cwd;
@@ -316,33 +355,32 @@ void execution()
 				{
 
 					mine.push_back(a[i]);
+					cout << a[i];
 				}
-				vector <vector <string>> directlist;
+				vector <vector <string> > directlist;
 				vector <string> empty;
 				const char * cbp;
 				const char * cmp;
 				string no;
 				for (int i = 0 ; i < mine.size() ; i++)
 				{
-					cout << mine[i];
-
-					if (((cmp = strchr(mine[i].c_str(),'*')) != NULL) || ((cbp = strchr(mine[i].c_str(),'*')) != NULL))						
+					if (((mine[i].find('*')) != std::string::npos) || ((mine[i].find('?')) != std::string::npos))						
 					{
-						no = cwd + mine[i] + "/";
-						cout << no;
+//						no = cwd + mine[i] + "/";
 						directlist.push_back(empty);
-						directlist = updatelist(directlist, no ,currentdir,i );
-						arguments.push_back(&directlist[i][0][0]);
+						directlist = updatelist(directlist, mine[i] ,currentdir,i );
+//						arguments.push_back(&directlist[i][0][0]);
 					}
 					else
 					{
 						directlist.push_back(empty);
 						directlist[i].push_back(mine[i]);
-						arguments.push_back(&directlist[i][0][0]);
+//						arguments.push_back(&mine[i][0]);
 					}
 				}
-				arguments.push_back(NULL);
-		     		execvp(directlist[0][0].c_str(),&arguments[0]);
+				int ifwe = execute(directlist , mine,arguments);
+//				arguments.push_back(NULL);
+//		     		execvp(directlist[0][0].c_str(),&arguments[0]);
 				exit(0);
 			}
 			else
@@ -351,6 +389,11 @@ void execution()
 				wait(&x);
 			}
 			gettimeofday(&realtimeend,&zone1);
+//			std::string cwd = getcwd(NULL,0);
+//			vector < vector < string > > directlist;
+//			vector <string> empty;
+//			directlist.push_back(empty);
+//			directlist = updatelist(directlist,a[0],cwd,0);
 			if (needtime == 1)
 			{
 				cout << "\n real	" <<(double)( realtimeend.tv_sec - realtime.tv_sec) + ((double)(realtimeend.tv_usec - realtime.tv_usec))/1000000;
