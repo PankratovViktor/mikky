@@ -184,6 +184,7 @@ vector <struct part> convsplit(string word)
 		letswork[j].to = letswork[j].from;
 		letswork[j].from = myst;
 	}
+
 	if ((letswork[0].iffrom >1) || (letswork[letswork.size() - 1].ifto >1))
 	{
 		cout << "too many directions\n";
@@ -365,10 +366,11 @@ void execution()
 				int to = open(letswork[letswork.size() -1].to.c_str(),O_WRONLY|O_CREAT|O_APPEND,0666);
 				int close = dup2(to,1);
 			}
-			for (int l = 0 ; l < letswork.size(); l++)
+			for (int l = 0 ; l < letswork.size() - 1; l++)
 			{
 				pipe(pipi.a);
 				pipevec.push_back(pipi);
+				cout << pipi.a[0] <<"\n"<< pipi.a[1]<<"\n";
 			}
 			for (int l = 0 ; l < letswork.size() ; l++)
 			{
@@ -377,22 +379,22 @@ void execution()
 				{
 					for (int i = 0 ; i < pipevec.size();i++)
 					{
-						if (i != (l-1)) 
-						{
-							close(pipevec[i].a[1]);
-						}
-						if (i != (l+1))
+						if (i != (l)) 
 						{
 							close(pipevec[i].a[0]);
+						}
+						if (i != (l-1))
+						{
+							close(pipevec[i].a[1]);
 						}
 					}
 					if (l != 0)
 					{
 						int open = dup2(pipevec[l-1].a[1],0);
 					}
-					if (l != (letswork.size() -1))
+					if (l != (letswork.size() - 1))
 					{
-						int close = dup2(pipevec[l+1].a[0],1);
+						int close = dup2(pipevec[l].a[0],1);
 					}
 				//pipend	
 					for (int i = 0 ; i < a.size() ; i++)
@@ -428,16 +430,16 @@ void execution()
 				}
 				else
 				{
+			//		for ( int i = 0; i < pipevec.size() ;i++)
+			////		{
+			//			close(pipevec[i].a[0]);
+			//			close(pipevec[i].a[1]);
+			//		}
 					int x;
 					wait(&x);
 				}
 			}
 			gettimeofday(&realtimeend,&zone1);
-//			std::string cwd = getcwd(NULL,0);
-//			vector < vector < string > > directlist;
-//			vector <string> empty;
-//			directlist.push_back(empty);
-//			directlist = updatelist(directlist,a[0],cwd,0);
 			if (needtime == 1)
 			{
 				cout << "\n real	" <<(double)( realtimeend.tv_sec - realtime.tv_sec) + ((double)(realtimeend.tv_usec - realtime.tv_usec))/1000000;
