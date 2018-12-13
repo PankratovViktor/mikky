@@ -192,6 +192,10 @@ vector <struct part> convsplit(string word)
 	}
 	letswork[0].from = setprob(letswork[0].from);
 	letswork[letswork.size()-1].to = setprob(letswork[letswork.size() -1].to);
+	for (int k =0 ; k < letswork.size() ;k++)
+	{
+//		cout << letswork[k].now << "\n";
+	}
 	return letswork;
 }
 string read(string b)
@@ -295,33 +299,33 @@ void execution()
 		}
 		string b1 = "";
 		string b2 = "";
-		vector <string> a;
-	       	a = split(a,letswork[0].now);
-		if (a[0] == "time")
+		vector <string> aa;
+	       	aa = split(aa,letswork[0].now);
+		if (aa[0] == "time")
 		{
-			for (int i = 0; i < a.size() - 1 ; i++)
+			for (int i = 0; i < aa.size() - 1 ; i++)
 			{
-				a[i] = a[i+1];
+				aa[i] =aa[i+1];
 			}
-			a.pop_back();
+			aa.pop_back();
 			needtime = 1;
 		}	
-		if (a[0] == "cd")
+		if (aa[0] == "cd")
 		{
 			int changeit;
-			if (a.size() == 1)
+			if (aa.size() == 1)
 			{
 				string c;
 				c = "/home";
 				changeit = chdir(getenv("HOME"));
 			} 
-			if (a.size() > 2)
+			if (aa.size() > 2)
 			{
 				cout <<"Wrong arguments number";
 			}
-			if (a.size() == 2)
+			if (aa.size() == 2)
 			{
-				changeit = chdir(a[1].c_str());
+				changeit = chdir(aa[1].c_str());
 			}
 		}
 		else
@@ -337,41 +341,33 @@ void execution()
 			stime = mytime.ru_stime;
 			vector <struct pipeelem> pipevec;
 			struct pipeelem pipi;
-//			for (i = 0 ;i < letswork.size(); i++)
-//			{
-//				pipe(pipi.a);
-//				pipevec.push_back(pipi);
-//			}
-//			for (i = 0;i < letswork.size();i++)
-//			{
-//			pid_t pid = fork();
-//			if (pid == 0)
-//				{
 			std::string cwd = getcwd(NULL,0);
 			string currentdir;
 			currentdir = cwd;
 			vector <char*> arguments;
-			if (letswork[0].from != "")
-			{
-				int from = open(letswork[0].from.c_str(),O_RDONLY,0666);
-				int op1 = dup2(from,0);
-			}
-			if ((letswork[letswork.size() -1].to != "") && (letswork[letswork.size() -1].doub == 0))
-			{
-				int to = open(letswork[letswork.size() - 1].to.c_str(),O_WRONLY|O_CREAT|O_TRUNC,0666);
-				int close1 = dup2(to,1);
-			}
-			if ((letswork[letswork.size() -1].to != "") && (letswork[letswork.size() -1].doub == 1))
-			{
-				int to = open(letswork[letswork.size() -1].to.c_str(),O_WRONLY|O_CREAT|O_APPEND,0666);
-				int close = dup2(to,1);
-			}
+//			if (letswork[0].from != "")
+//			{
+//				int from = open(letswork[0].from.c_str(),O_RDONLY,0666);
+//				int op1 = dup2(from,0);
+//			}
+//			if ((letswork[letswork.size() -1].to != "") && (letswork[letswork.size() -1].doub == 0))
+//			{
+////				int to = open(letswork[letswork.size() - 1].to.c_str(),O_WRONLY|O_CREAT|O_TRUNC,0666);
+//				int close1 = dup2(to,1);
+//			}
+//			if ((letswork[letswork.size() -1].to != "") && (letswork[letswork.size() -1].doub == 1))
+//			{
+//				int to = open(letswork[letswork.size() -1].to.c_str(),O_WRONLY|O_CREAT|O_APPEND,0666);
+//				int close = dup2(to,1);
+//			}
 			for (int l = 0 ; l < letswork.size() - 1; l++)
 			{
 				pipe(pipi.a);
 				pipevec.push_back(pipi);
-				cout << pipi.a[0] <<"\n"<< pipi.a[1]<<"\n";
+		//		cout << pipi.a[0] <<"\n"<< pipi.a[1]<<"\n";
 			}
+			
+
 			for (int l = 0 ; l < letswork.size() ; l++)
 			{
 				pid_t pid = fork();
@@ -379,24 +375,50 @@ void execution()
 				{
 					for (int i = 0 ; i < pipevec.size();i++)
 					{
+			
 						if (i != (l)) 
 						{
+		//					close(pipi.a[1]);
 							close(pipevec[i].a[1]);
+	
 						}
 						if (i != (l-1))
 						{
+						//	close(pipi.a[0]);
 							close(pipevec[i].a[0]);
 						}
 					}
 					if (l != 0)
 					{
+					//	dup2(pipi.a[0],0);
 						int open = dup2(pipevec[l-1].a[0],0);
 					}
 					if (l != (letswork.size() - 1))
 					{
+					//	dup2(pipi.a[1],1);
 						int close = dup2(pipevec[l].a[1],1);
+			     		}
+				//pipend
+					if (( l == 0) && (letswork[l].from != ""))
+					{
+						int open1 = open(letswork[l].from.c_str(),O_RDONLY,0666);
+						int open2 = dup2(open1,0);
 					}
-				//pipend	
+					if (( l == letswork.size() - 1) && (letswork[l].to != ""))
+					{
+						if (letswork[l].doub == 0)
+						{
+							int close1 = open(letswork[l].to.c_str(),O_WRONLY|O_CREAT|O_TRUNC,0666);
+							int close3 = dup2(close1,1);
+						}
+						else
+						{
+							int close2 = open(letswork[l].to.c_str(),O_WRONLY|O_CREAT|O_APPEND,0666);
+							int close4 = dup2(close2,1);
+						}
+					}
+					vector <string> a;
+					a = split(a,letswork[l].now);	
 					for (int i = 0 ; i < a.size() ; i++)
 					{
 						mine.push_back(a[i]);
@@ -411,21 +433,16 @@ void execution()
 					{
 						if (((mine[i].find('*')) != std::string::npos) || ((mine[i].find('?')) != std::string::npos))						
 						{
-//							no = cwd + mine[i] + "/";
 							directlist.push_back(empty);
 							directlist = updatelist(directlist, mine[i] ,currentdir,i );
-//							arguments.push_back(&directlist[i][0][0]);
 						}
 						else
 						{
 							directlist.push_back(empty);
 							directlist[i].push_back(mine[i]);
-//							arguments.push_back(&mine[i][0]);
 						}
 					}
 					int ifwe = execute(directlist , mine,arguments);
-//					arguments.push_back(NULL);
-//		     			execvp(directlist[0][0].c_str(),&arguments[0]);
 					exit(0);
 				}
 				else
@@ -438,7 +455,7 @@ void execution()
 					int x;
 					wait(&x);
 				}
-				delete [] &pipevec[0];
+//				delete [] &pipevec[0];
 			}
 			gettimeofday(&realtimeend,&zone1);
 			if (needtime == 1)
