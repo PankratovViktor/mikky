@@ -5,8 +5,6 @@ using namespace std;
 int main()
 {
 	int a,b;
-	cout <<"i m reading"  << "\n";
-	cin >> a >> b;
-	cout << 3* a << b;
-
+	scanf("%d",&a);
+	printf("%d %d",3*a,a);
 }
