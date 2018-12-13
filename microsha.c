@@ -381,20 +381,20 @@ void execution()
 					{
 						if (i != (l)) 
 						{
-							close(pipevec[i].a[0]);
+							close(pipevec[i].a[1]);
 						}
 						if (i != (l-1))
 						{
-							close(pipevec[i].a[1]);
+							close(pipevec[i].a[0]);
 						}
 					}
 					if (l != 0)
 					{
-						int open = dup2(pipevec[l-1].a[1],0);
+						int open = dup2(pipevec[l-1].a[0],0);
 					}
 					if (l != (letswork.size() - 1))
 					{
-						int close = dup2(pipevec[l].a[0],1);
+						int close = dup2(pipevec[l].a[1],1);
 					}
 				//pipend	
 					for (int i = 0 ; i < a.size() ; i++)
@@ -438,6 +438,7 @@ void execution()
 					int x;
 					wait(&x);
 				}
+				delete [] &pipevec[0];
 			}
 			gettimeofday(&realtimeend,&zone1);
 			if (needtime == 1)
