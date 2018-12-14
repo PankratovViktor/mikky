@@ -71,7 +71,7 @@ void timeend(struct rusage mytime, struct timeval time1 , struct timeval time2)
 }
 string setprob(string b)
 {
-	while (b[b.size()] == ' ')
+	while (b[b.size()-1] == ' ')
 	{
 		b.erase(b.size() -1);
 	}
@@ -182,14 +182,16 @@ vector <struct part> convsplit(string word)
 
 	if ((letswork[0].iffrom >1) || (letswork[letswork.size() - 1].ifto >1))
 	{
-		cout << "too many directions\n";
+//		cout << "too many directions\n";
 		return notworking;
 	}
 	letswork[0].from = setprob(letswork[0].from);
 	letswork[letswork.size()-1].to = setprob(letswork[letswork.size() -1].to);
 	for (int k =0 ; k < letswork.size() ;k++)
 	{
-//		cout << letswork[k].now << "\n";
+		letswork[k].from = setprob(letswork[k].from);
+		letswork[k].to = setprob(letswork[k].to);
+		letswork[k].now = setprob(letswork[k].now);
 	}
 	return letswork;
 }
@@ -226,7 +228,12 @@ int execute (vector < vector < string > > direktlist, vector <string > mine,vect
 			for(j = 0 ; j < direktlist[i].size() ; j++)
 			{
 				mine[i] = direktlist[i][j];
-				execute(direktlist ,mine,arguments);
+			//	cout << mine[i];
+				if (( i != direktlist.size() -1) || (j != direktlist[i].size() -1))
+				{
+					execute(direktlist ,mine,arguments);
+
+				}
 			}
 		}
 	}
@@ -236,7 +243,18 @@ int execute (vector < vector < string > > direktlist, vector <string > mine,vect
 		argiments.push_back(&mine[i][0]);
 	}
 	argiments.push_back(NULL);
-	execvp(mine[0].c_str(),&argiments[0]);
+	pid_t pid = fork();
+	if (pid == 0)
+	{
+		execvp(mine[0].c_str(),&argiments[0]);
+		exit(0);
+	}
+	else
+	{
+		int x;
+		wait (&x);
+//		cout << "\n";
+	}	
 	return 0;
 }
 vector <string> parse(string arg)
@@ -406,9 +424,9 @@ void execution()
 			}
 			for (int l = 0 ; l < letswork.size() ; l++)
 			{
-				pid_t pid = fork();
-				if (pid ==0)
-				{
+				
+				
+				
 					for (int i = 0 ; i < pipevec.size();i++)
 					{
 			
@@ -484,13 +502,8 @@ void execution()
 						}
 					}
 					int ifwe = execute(directlist , mine,arguments);
-					exit(0);
-				}
-				else
-				{
-					int x;
-					wait(&x);
-				}
+				//	exit(0);
+				
 			}
 			gettimeofday(&realtimeend,&zone1);
 			if (needtime == 1)
@@ -510,6 +523,14 @@ int main()
 //	std::string cwd = getcwd(NULL,0);
 //	cout << cwd;
 //	directlist = updatelist(directlist,arg,cwd,0);
+//	string arg = "cat a | cat | cat";
+//	vector <struct part> t;
+//	t = convsplit(arg);
+//	for (int i = 0;i < t.size(); i++)
+//	{
+//		t[i].now = setprob(t[i].now);
+//		cout << "o"<<t[i].now<< "o"<< "\n";
+//	}
 	execution();
 }
 
