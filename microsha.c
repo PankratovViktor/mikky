@@ -51,11 +51,6 @@ vector <string> split (vector <string> a,string word)
 		}
 	}
 	a.push_back(word);
-	int ii;
-	for ( ii = 0 ; ii < a.size() ; ii++)
-	{
-//		cout << a[ii];
-	}
 	return a;	
 }
 struct rusage timebegin()
@@ -244,40 +239,84 @@ int execute (vector < vector < string > > direktlist, vector <string > mine,vect
 	execvp(mine[0].c_str(),&argiments[0]);
 	return 0;
 }
-int checkdir ( string argument, string where)
+vector <string> parse(string arg)
 {
-	int a = 0; // fnmatch(argument.c_str() , where.c_str() , FNM_PATHNAME);
-	return a;
-}
-vector <vector <string> > updatelist(vector<vector<string> > direktlist,string argument,string where,int i)
-{
-//	cout << "hello";
-	DIR *d = opendir(where.c_str());
-	struct dirent *entry;
-	string c;
-	for (dirent *entry = readdir(d) ; entry !=NULL ;entry = readdir(d))
+	int i = 0;
+	vector < string > ans;
+	string news ;
+	news = "";
+	while (i < arg.length())
 	{
-//		cout << "hello";
-		string b = entry->d_name;
-		if ((b == ".") ||(b == ".."))continue;
-		c = where + "/" + entry->d_name;
-//		cout << c << "\n";
-		struct stat isitway;
-		stat(c.c_str(), &isitway);
-		if (S_ISDIR(isitway.st_mode)) 
+		if (arg[i] != '/')
 		{
-			direktlist = updatelist(direktlist,argument,c,i);
+			news = news + arg[i];
 		}
-
-		else if (checkdir(argument , c) == 0) 
+		else
 		{
-//			cout << c << "\n";
-			direktlist[i].push_back(c);
-//			cout << direktlist[i][direktlist[i].size() -1] << "\n";
+			ans.push_back(news);
+			news = "";
+		}
+		i++;
+	}
+	ans.push_back(news);
+	return ans;
+}
+vector <vector <string> > scanner(string c, string where, int currentelem , vector <vector < string> > direktlist, DIR *d, vector <string> pathy , int i)
+{
+	d = opendir(where.c_str());
+	string where1;
+	string c1;
+	for (dirent *entry = readdir(d) ; entry != NULL ; entry = readdir(d))
+	{
+		//cout << where << "\n";
+		string b = entry->d_name;
+		if ( currentelem != 0)
+		{	
+			c1 = c + "/" + entry->d_name ;
+		}
+		else
+		c1 = c + entry->d_name;
+		if ((currentelem == (pathy.size() -1)) && (fnmatch(pathy[pathy.size() -1].c_str() , b.c_str(),FNM_PATHNAME) == 0))
+		{
+		//	cout << c1 << "\n";
+			direktlist[i].push_back(c1);
+		}
+		if ((b == ".")||(b == "..")) continue;
+		where1 = where + "/" + entry->d_name ;
+		struct stat isitway;
+		stat (where1.c_str() , &isitway);
+		if ((S_ISDIR(isitway.st_mode))&&(currentelem < pathy.size()) )
+		{
+			if (fnmatch(pathy[currentelem].c_str(), b.c_str(),FNM_PATHNAME) == 0)
+			{
+				direktlist = scanner(c1,where1,currentelem + 1,direktlist,d,pathy,i);
+			}
 		}
 	}
 	closedir(d);
-//	cout << direktlist[direktlist.size() - 1][0] << "\n";
+	return direktlist;			
+}
+vector <vector <string> > updatelist(vector<vector<string> > direktlist,string argument,string where,int i)
+{
+	DIR *d ;
+	vector <string> pathy;
+	pathy = parse(argument);
+	string c;
+	int currentelem = 0;
+	if (pathy[0] == "")
+	{
+		c = "/";
+		where = "/";
+		d = opendir("/");
+		currentelem++;	
+	}
+	else
+	{
+		c = "";
+		d = opendir(where.c_str());
+	}
+	direktlist = scanner(c,where,currentelem,direktlist,d,pathy,i);
+	closedir(d);
 	return direktlist;
 }
 void execution()
@@ -364,10 +403,7 @@ void execution()
 			{
 				pipe(pipi.a);
 				pipevec.push_back(pipi);
-		//		cout << pipi.a[0] <<"\n"<< pipi.a[1]<<"\n";
 			}
-			
-
 			for (int l = 0 ; l < letswork.size() ; l++)
 			{
 				pid_t pid = fork();
@@ -435,6 +471,11 @@ void execution()
 						{
 							directlist.push_back(empty);
 							directlist = updatelist(directlist, mine[i] ,currentdir,i );
+						//	cout << "hello" << "\n";
+						//	for (int m = 0; m < directlist[0].size() ; m++)
+						//	{
+						//		cout << directlist[0][i] << "\n";
+						//	}		
 						}
 						else
 						{
@@ -447,15 +488,9 @@ void execution()
 				}
 				else
 				{
-			//		for ( int i = 0; i < pipevec.size() ;i++)
-			////		{
-			//			close(pipevec[i].a[0]);
-			//			close(pipevec[i].a[1]);
-			//		}
 					int x;
 					wait(&x);
 				}
-//				delete [] &pipevec[0];
 			}
 			gettimeofday(&realtimeend,&zone1);
 			if (needtime == 1)
@@ -468,6 +503,13 @@ void execution()
 }
 int main()
 {
+//	vector<vector<string>> directlist;
+//	string arg = "*";
+//	vector <string> empty;
+//	directlist.push_back(empty);
+//	std::string cwd = getcwd(NULL,0);
+//	cout << cwd;
+//	directlist = updatelist(directlist,arg,cwd,0);
 	execution();
 }
 
