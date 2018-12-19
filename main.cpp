@@ -218,6 +218,7 @@ int getdirect()
 		cout << ">";
 	}
     delete [] buf;
+    return 0;
 }
 int execute (vector < vector < string > > direktlist, vector <string > mine,vector <char * > arguments)
 {
@@ -228,6 +229,10 @@ int execute (vector < vector < string > > direktlist, vector <string > mine,vect
 	{
 		if ((mine[i].find('*') != std::string::npos) || (mine[i].find('?') != std::string::npos))
 		{
+			if (direktlist[i].size() == 0)
+			{
+				exit(0);
+			}
 			for(j = 0 ; j < direktlist[i].size() ; j++)
 			{
 			//	cout << mine[i];
@@ -289,7 +294,6 @@ vector <vector <string> > scanner(string c, string where, int currentelem , vect
         if ((b == ".")||(b == "..")) continue;
 		if ((currentelem == (pathy.size() -1)) && (fnmatch(pathy[pathy.size() -1].c_str() , b.c_str(),FNM_PATHNAME) == 0))
 		{
-		//	cout << c1 << "\n";
 			direktlist[i].push_back(c1);
 		}
 		
@@ -309,7 +313,6 @@ vector <vector <string> > scanner(string c, string where, int currentelem , vect
 }
 vector <vector <string> > updatelist(vector<vector<string> > direktlist,string argument,string where,int i)
 {
-   // cout << "living\n" ;
 	DIR *d ;
 	vector <string> pathy;
 	pathy = parse(argument);
@@ -329,20 +332,14 @@ vector <vector <string> > updatelist(vector<vector<string> > direktlist,string a
 	}
 	direktlist = scanner(c,where,currentelem,direktlist,d,pathy,i);
 	closedir(d);
-    /*printf("\n-----------------------\n");
-    for ( int i = 0 ; i < direktlist.size() ; i++)
-    {
-        for (int j = 0 ; j < direktlist[i].size() ; j++)
-        {
-        cout << direktlist[i][j] << " " ;
-        }
-           cout << "\n";
-    }
-    printf("-----------------------\n");*/
 	return direktlist;
+}
+static void ihatectrlc(int ctrlc)
+{
 }
 void execution()
 {
+	signal(SIGINT,ihatectrlc);
 	while (true)
 	{
 		int corr = getdirect();
@@ -370,6 +367,11 @@ void execution()
 			}
 			aa.pop_back();
 			needtime = 1;
+			while (letswork[0].now[0] != 'e')
+			{
+				letswork[0].now.erase(letswork[0].now.begin());
+			}
+			letswork[0].now.erase(letswork[0].now.begin());
 		}	
 		if (aa[0] == "cd")
 		{
@@ -401,31 +403,14 @@ void execution()
 			struct timeval stime;
 			stime = mytime.ru_stime;
 			vector <struct pipeelem> pipevec;
-			struct pipeelem pipi;
-            
-            char * buf = new char[10000];
-	        getcwd(buf,10000);  
-            std::string cwd(buf);
-            delete [] buf;          
-
+			struct pipeelem pipi;           
+	  		char * buf = new char[10000];
+		        getcwd(buf,10000);  
+		        std::string cwd(buf);
+        		delete [] buf;          
 			string currentdir;
 			currentdir = cwd;
 			vector <char*> arguments;
-//			if (letswork[0].from != "")
-//			{
-//				int from = open(letswork[0].from.c_str(),O_RDONLY,0666);
-//				int op1 = dup2(from,0);
-//			}
-//			if ((letswork[letswork.size() -1].to != "") && (letswork[letswork.size() -1].doub == 0))
-//			{
-////				int to = open(letswork[letswork.size() - 1].to.c_str(),O_WRONLY|O_CREAT|O_TRUNC,0666);
-//				int close1 = dup2(to,1);
-//			}
-//			if ((letswork[letswork.size() -1].to != "") && (letswork[letswork.size() -1].doub == 1))
-//			{
-//				int to = open(letswork[letswork.size() -1].to.c_str(),O_WRONLY|O_CREAT|O_APPEND,0666);
-//				int close = dup2(to,1);
-//			}
 			for (int l = 0 ; l < letswork.size() - 1; l++)
 			{
 				pipe(pipi.a);
@@ -433,116 +418,98 @@ void execution()
 			}
 			for (int l = 0 ; l < letswork.size() ; l++)
 			{
-                pid_t pidi = fork();
-                if (pidi == 0)
-                {
-					for (int i = 0 ; i < pipevec.size();i++)
+	                pid_t pidi = fork();
+        	        if (pidi == 0)
+        	        {
+				for (int i = 0 ; i < pipevec.size();i++)
+				{
+					if (i != (l)) 
 					{
-			
-						if (i != (l)) 
-						{
-							close(pipevec[i].a[1]);
-	
-						}
-						if (i != (l-1))
-						{
-							close(pipevec[i].a[0]);
-						}
+						close(pipevec[i].a[1]);
 					}
-					if (l != 0)
+					if (i != (l-1))
 					{
-						int open = dup2(pipevec[l-1].a[0],0);
+						close(pipevec[i].a[0]);
 					}
-					if (l != (letswork.size() - 1))
+				}
+				if (l != 0)
+				{
+					int open = dup2(pipevec[l-1].a[0],0);
+				}
+				if (l != (letswork.size() - 1))
+				{
+					int close = dup2(pipevec[l].a[1],1);
+		     		}
+				if (( l == 0) && (letswork[l].from != ""))
+				{
+					int open1 = open(letswork[l].from.c_str(),O_RDONLY,0666);
+					int open2 = dup2(open1,0);
+				}
+				if (( l == letswork.size() - 1) && (letswork[l].to != ""))
+				{
+					if (letswork[l].doub == 0)
 					{
-						int close = dup2(pipevec[l].a[1],1);
-			     		}
-				//pipend
-					if (( l == 0) && (letswork[l].from != ""))
+						int close1 = open(letswork[l].to.c_str(),O_WRONLY|O_CREAT|O_TRUNC,0666);
+						int close3 = dup2(close1,1);
+					}
+					else
 					{
-						int open1 = open(letswork[l].from.c_str(),O_RDONLY,0666);
-						int open2 = dup2(open1,0);
+						int close2 = open(letswork[l].to.c_str(),O_WRONLY|O_CREAT|O_APPEND,0666);
+						int close4 = dup2(close2,1);
 					}
-					if (( l == letswork.size() - 1) && (letswork[l].to != ""))
+				}
+				vector <string> a;
+				a = split(a,letswork[l].now);	
+				for (int i = 0 ; i < a.size() ; i++)
+				{
+					mine.push_back(a[i]);
+				}
+				vector <vector <string> > directlist;
+				vector <string> empty;
+				const char * cbp;
+				const char * cmp;
+				string no;
+				for (int i = 0 ; i < mine.size() ; i++)
+				{   
+					if (((mine[i].find('*')) != std::string::npos) || ((mine[i].find('?')) != std::string::npos))						
+					{         
+						directlist.push_back(empty);
+						directlist = updatelist(directlist, mine[i] ,currentdir,i );	
+					}
+					else
 					{
-						if (letswork[l].doub == 0)
-						{
-							int close1 = open(letswork[l].to.c_str(),O_WRONLY|O_CREAT|O_TRUNC,0666);
-							int close3 = dup2(close1,1);
-						}
-						else
-						{
-							int close2 = open(letswork[l].to.c_str(),O_WRONLY|O_CREAT|O_APPEND,0666);
-							int close4 = dup2(close2,1);
-						}
+						directlist.push_back(empty);
+						directlist[i].push_back(mine[i]);
 					}
-					vector <string> a;
-					a = split(a,letswork[l].now);	
-					for (int i = 0 ; i < a.size() ; i++)
-					{
-						mine.push_back(a[i]);
-					}
-					vector <vector <string> > directlist;
-					vector <string> empty;
-					const char * cbp;
-					const char * cmp;
-					string no;
-					for (int i = 0 ; i < mine.size() ; i++)
-					{   
-						if (((mine[i].find('*')) != std::string::npos) || ((mine[i].find('?')) != std::string::npos))						
-						{
-                            
-							directlist.push_back(empty);
-							directlist = updatelist(directlist, mine[i] ,currentdir,i );	
-						}
-						else
-						{
-							directlist.push_back(empty);
-							directlist[i].push_back(mine[i]);
-						}
-					}
-					int ifwe = execute(directlist , mine,arguments);
-				//	exit(0);
-				
+				}
+				int ifwe = execute(directlist , mine,arguments);					
 			}
-}
-			gettimeofday(&realtimeend,&zone1);
-			if (needtime == 1)
-			{
-				cout << "\n real	" <<(double)( realtimeend.tv_sec - realtime.tv_sec) + ((double)(realtimeend.tv_usec - realtime.tv_usec))/1000000;
-				timeend(mytime,utime,stime);
-			}
-        for (int i = 0 ; i < pipevec.size() ; i++)
-        {
-            close(pipevec[i].a[1]);
-            close(pipevec[i].a[0]);
-        }
-        int child;
-        while(wait(&child) > 0); 
 		}
-   
-        
+		gettimeofday(&realtimeend,&zone1);
+	//	if (needtime == 1)
+	//	{
+	//		cout << "\n real	" <<(double)( realtimeend.tv_sec - realtime.tv_sec) + ((double)(realtimeend.tv_usec - realtime.tv_usec))/1000000;
+	//		timeend(mytime,utime,stime);
+	//	}
+        	for (int i = 0 ; i < pipevec.size() ; i++)
+        	{
+        		close(pipevec[i].a[1]);
+        		close(pipevec[i].a[0]);
+        	}
+        	int child;
+        	while(wait(&child) > 0);
+		gettimeofday(&realtimeend,&zone1);
+		if (needtime == 1)
+		{
+			cout << "\n real " <<(double)( realtimeend.tv_sec - realtime.tv_sec) + ((double)(realtimeend.tv_usec - realtime.tv_usec))/1000000;
+			timeend(mytime,utime,stime);
+			needtime = 0;
+		}	
+	} 
     }
 }
 int main()
 {
-    //cout << "trololo\n";
-	//vector<vector<string>> directlist;
-	//string arg = "/tmp/*";
-	//vector <string> empty;
-	//directlist.push_back(empty);
-//	std::string cwd = getcwd(NULL,0);
-   // string cwd = "";
-	//cout << "trololo\n";
-//directlist = updatelist(directlist,arg,cwd,0);
-//	string arg = "cat a | cat | cat";
-//	vector <struct part> t;
-//	t = convsplit(arg);
-//	for (int i = 0;i < t.size(); i++)
-//	{
-//		t[i].now = setprob(t[i].now);
-//		cout << "o"<<t[i].now<< "o"<< "\n";
-//	}
 	execution();
 }
 
