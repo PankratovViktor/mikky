@@ -182,7 +182,6 @@ vector <struct part> convsplit(string word)
 
 	if ((letswork[0].iffrom >1) || (letswork[letswork.size() - 1].ifto >1))
 	{
-//		cout << "too many directions\n";
 		return notworking;
 	}
 	letswork[0].from = setprob(letswork[0].from);
@@ -206,7 +205,7 @@ string read(string b)
 }
 int getdirect()
 {
-    char * buf = new char[10000];
+	char * buf = new char[10000];
 	getcwd(buf,10000);
 	cout << string(buf) << "/Microsha";
 	if (getuid() == 0)
@@ -217,14 +216,14 @@ int getdirect()
 	{
 		cout << ">";
 	}
-    delete [] buf;
-    return 0;
+	delete [] buf;
+	return 0;
 }
 int execute (vector < vector < string > > direktlist, vector <string > mine,vector <char * > arguments)
 {
 	int i;
 	int j;
-    vector < char* > argiments;
+    	vector < char* > argiments;
 	for ( i =0 ; i < mine.size() ; i++)
 	{
 		if ((mine[i].find('*') != std::string::npos) || (mine[i].find('?') != std::string::npos))
@@ -235,18 +234,29 @@ int execute (vector < vector < string > > direktlist, vector <string > mine,vect
 			}
 			for(j = 0 ; j < direktlist[i].size() ; j++)
 			{
-			//	cout << mine[i];
 				argiments.push_back(&direktlist[i][j][0]);
 			}
 		}
-        else
-        {
-           argiments.push_back(&mine[i][0]); 
-        }
+        	else
+        	{
+//			if ((i != 0) || (mine[i] != "pwd"))
+//			{
+           			argiments.push_back(&mine[i][0]);
+//			}
+//			else
+//			{
+//				char * buf = new char[10000];
+
+//				printf("%s%s\n",getenv("PATH"),buf);	
+//			}	
+        	}
 	}
 	argiments.push_back(NULL);
-    execvp(mine[0].c_str(),&argiments[0]);
-    exit(0);
+	if ( argiments[0] != NULL)
+	{
+        	execvp(mine[0].c_str(),&argiments[0]);
+	}
+        exit(0);
 	return 0;
 }
 vector <string> parse(string arg)
@@ -274,16 +284,14 @@ vector <string> parse(string arg)
 vector <vector <string> > scanner(string c, string where, int currentelem , vector <vector < string> > direktlist, DIR *d, vector <string> pathy , int i)
 {
 	if ((d = opendir(where.c_str())) == NULL)
-    {
-        perror("opendir: ") ;
-        return direktlist;
-    }
-
+    	{
+        	perror("opendir: ") ;
+        	return direktlist;
+    	}
 	string where1;
 	string c1;
 	for (dirent *entry = readdir(d) ; entry != NULL ; entry = readdir(d))
 	{
-		//cout << currentelem << "\n";
 		string b = entry->d_name;
 		if ( currentelem != 0)
 		{	
@@ -291,12 +299,11 @@ vector <vector <string> > scanner(string c, string where, int currentelem , vect
 		}
 		else
 		c1 = c + entry->d_name;
-        if ((b == ".")||(b == "..")) continue;
+        	if ((b == ".")||(b == "..")) continue;
 		if ((currentelem == (pathy.size() -1)) && (fnmatch(pathy[pathy.size() -1].c_str() , b.c_str(),FNM_PATHNAME) == 0))
 		{
 			direktlist[i].push_back(c1);
 		}
-		
 		where1 = where + "/" + entry->d_name ;
 		struct stat isitway;
 		stat (where1.c_str() , &isitway);
@@ -384,7 +391,6 @@ void execution()
 			} 
 			if (aa.size() > 2)
 			{
-				cout <<"Wrong arguments number";
 			}
 			if (aa.size() == 2)
 			{
